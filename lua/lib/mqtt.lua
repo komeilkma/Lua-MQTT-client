@@ -340,6 +340,32 @@ function mqttc:subscribe(topic, qos)
     return true
 end
 
+function mqttc:unsubscribe(topic)
+    if not self.connected then
+        log.info("mqtt.client:unsubscribe", "not connected")
+        return false
+    end
+    
+    local topics
+    if type(topic) == "string" then
+        topics = {topic}
+    else
+        topics = topic
+    end
+    
+    if not self:write(packUNSUBSCRIBE(0, self.getNextPacketId(), topics)) then
+        log.info("mqtt.client:unsubscribe", "send failed")
+        return false
+    end
+    
+    if not self:waitfor(UNSUBACK, self.commandTimeout, nil, true) then
+        log.info("mqtt.client:unsubscribe", "wait ack failed")
+        return false
+    end
+    
+    return true
+end
+
 function mqttc:publish(topic, payload, qos, retain)
     if not self.connected then
         log.info("mqtt.client:publish", "not connected")
